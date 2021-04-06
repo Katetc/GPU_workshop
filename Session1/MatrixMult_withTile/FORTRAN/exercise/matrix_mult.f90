@@ -5,7 +5,7 @@ program matrix_mult
    character(10) :: colsAChar
    character(10) :: rowsBChar
    character(10) :: colsBChar
-   integer, parameter:: DEFAULT_DIM=1024
+   integer, parameter:: DEFAULT_DIM=2048
    real, parameter:: MAT_A_VAL=3.0
    real, parameter:: MAT_B_VAL=2.0
    real, parameter:: VERIF_TOL=1.0E-6
@@ -90,17 +90,20 @@ program matrix_mult
 !    Try using "tile" clause
 
       call system_clock(t1)
-
+!$acc data copyin(a,b) copyout(c_gpu)
+!$acc parallel loop collapse(2) reduction(+:tmp)
       do j=1,colsB
          do i=1,rowsA
             tmp = 0.0
+!$acc loop reduction(+:tmp)
             do k=1,rowsB
                 tmp = tmp + a(i,k) * b(k,j)
             enddo
             c_gpu(i,j) = tmp
          enddo
       enddo
-
+!$acc end parallel
+!$acc end data
 
       call system_clock(t2)
       dt = t2-t1
